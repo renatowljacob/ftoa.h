@@ -1,0 +1,4 @@
+#!/bin/sh
+
+gcc -fsanitize=address,undefined,leak -O0 -gdwarf -ggdb -o tests tests.c \
+    && ./tests
