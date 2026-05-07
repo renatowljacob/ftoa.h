@@ -86,13 +86,14 @@
 #endif
 
 /*
- *  buf:  buffer into which to write
- *  fmt:  float format (either one of f, e, E, g, and G)
- *  prec: for f, e, and E conversions, means digits to appear after the radix
- *    character; for g and G conversions, means maximum number of significant
- *    digits. pass -1 for default precision (6)
+ *  buf:    buffer into which to write
+ *  fmt:    float format (either one of f, e, E, g, and G)
+ *  prec:   for f, e, and E conversions, digits to appear after the radix
+ *          character; for g and G conversions, maximum number of significant
+ *          digits. pass -1 for default precision (6)
+ *  number: double to format
  */
-int ftoa(char *buf, char fmt, int prec, double float_value);
+int ftoa(char *buf, char fmt, int prec, double number);
 
 // internal float utility functions
 static stbsp__int32 stbsp__real_to_str(char const **start, stbsp__uint32 *len, char *out, stbsp__int32 *decimal_pos, double value, stbsp__uint32 frac_digits);
@@ -122,7 +123,7 @@ static struct
    "75767778798081828384858687888990919293949596979899"
 };
 
-int ftoa(char *buf, char fmt, int prec, double float_value) {
+int ftoa(char *buf, char fmt, int prec, double number) {
    static char hex[] = "0123456789abcdefxp";
    static char hexu[] = "0123456789ABCDEFXP";
    char *bf;
@@ -158,7 +159,7 @@ int ftoa(char *buf, char fmt, int prec, double float_value) {
    if (pr == -1)
       pr = 6; // default is 6
               // read the double into a string
-   if (stbsp__real_to_parts((stbsp__int64 *)&n64, &dp, float_value))
+   if (stbsp__real_to_parts((stbsp__int64 *)&n64, &dp, number))
       fl |= STBSP__NEGATIVE;
 
    s = num + 64;
@@ -231,7 +232,7 @@ int ftoa(char *buf, char fmt, int prec, double float_value) {
    else if (pr == 0)
       pr = 1; // default is 6
               // read the double into a string
-   if (stbsp__real_to_str(&sn, &l, num, &dp, float_value, (pr - 1) | 0x80000000))
+   if (stbsp__real_to_str(&sn, &l, num, &dp, number, (pr - 1) | 0x80000000))
       fl |= STBSP__NEGATIVE;
 
    // clamp the precision and delete extra zeros after clamp
@@ -265,7 +266,7 @@ int ftoa(char *buf, char fmt, int prec, double float_value) {
    if (pr == -1)
       pr = 6; // default is 6
               // read the double into a string
-   if (stbsp__real_to_str(&sn, &l, num, &dp, float_value, pr | 0x80000000))
+   if (stbsp__real_to_str(&sn, &l, num, &dp, number, pr | 0x80000000))
       fl |= STBSP__NEGATIVE;
 doexpfromg:
    tail[0] = 0;
@@ -324,16 +325,16 @@ doafloat:
       if (fl & STBSP__METRIC_1024)
          divisor = 1024.0;
       while (fl < 0x4000000) {
-         if ((float_value < divisor) && (float_value > -divisor))
+         if ((number < divisor) && (number > -divisor))
             break;
-         float_value /= divisor;
+         number /= divisor;
          fl += 0x1000000;
       }
    }
    if (pr == -1)
       pr = 6; // default is 6
               // read the double into a string
-   if (stbsp__real_to_str(&sn, &l, num, &dp, float_value, pr))
+   if (stbsp__real_to_str(&sn, &l, num, &dp, number, pr))
       fl |= STBSP__NEGATIVE;
 dofloatfromg:
    tail[0] = 0;
@@ -491,7 +492,7 @@ flt_lead:
          pr = 0;
       else if (pr == -1)
          pr = 1;
-      float_value = (double)(stbsp__int64)n64;
+      number = (double)(stbsp__int64)n64;
       goto doafloat;
    }
 
