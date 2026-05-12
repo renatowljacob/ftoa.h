@@ -8,195 +8,86 @@
 #define STB_SPRINTF_IMPLEMENTATION
 #include "vendor/stb_sprintf.h"
 
-# define SPRINTF stbsp_sprintf
-# define SNPRINTF stbsp_snprintf
+#define CHECK_END()                                                            \
+   if ((int)stb_len != ftoa_len || strncmp(stb_buf, ftoa_buf, stb_len)) {      \
+     printf("< '%s'\n> '%s'\n", stb_buf, ftoa_buf);                            \
+     assert(!"Fail");                                                          \
+   }
 
-// ftoa / stbsp_sprintf
-#define CHECK_END()                                                           \
-      if (stb_ret != ftoa_ret || strncmp(sprintf_buf, ftoa_buf, stb_ret)) {   \
-         printf("< '%s'\n> '%s'\n", sprintf_buf, ftoa_buf);                   \
-         assert(!"Fail");                                                     \
-      }
+typedef struct Float_Single_Test {
+   double value;
+   long prec;
+   char fmt;
+   char *printf_fmt;
+} Float_Single_Test;
+
+typedef struct Float_Double_Test {
+   double value[2];
+   long prec;
+   char fmt;
+   char *printf_fmt;
+} Float_Double_Test;
 
 int main(void)
 {
-   char sprintf_buf[1024] = {0};
+   char stb_buf[1024] = {0};
    char ftoa_buf[1024] = {0};
-   const double pow_2_75 = 37778931862957161709568.0;
-   const double pow_2_85 = 38685626227668133590597632.0;
 
-   // Tests taken from the library
+   Float_Single_Test tests_single[] = {
+      { -3.0, -1, 'f', "%f" },
+      { -8.88888888, 10, 'f', "%.10f" },
+      { -880.88888888, 10, 'f', "%.10f" },
+      { 4.1, 1, 'f', "%.1f" },
+      { 0.1, 0, 'f', "%.0f" },
+      { 1e-4, 2, 'f', "%.2f" },
+      { -5.2, 2, 'f', "%.2f" },
+      { 0., 1, 'f', "%.1f" },
+      { -0., -1, 'f', "%f" },
+      { 9.09834e-07, -1, 'f', "%f" },
+      { 38685626227668133590597632.0, 1, 'f', "%.1f" },
+      { 5e-7, 24, 'f', "%.24f" },
+      { 1e-8, 10, 'f', "%.10f" },
+      { 100056789.0, 1, 'f', "%.1f" },
+      { 1.23, 2, 'f', "%.2f" },
+      { -3.0, -1, 'e', "%e" },
+      { 4.1, 1, 'E', "%.1E" },
+      { -5.2, 2, 'e', "%.2e" },
+      { 3.1415962, -1, 'g', "%g" },
+      { 4.1, 1, 'G', "%.1G" },
+      { 3e-300, -1, 'g', "%g" },
+      { 1.2, 0, 'g', "%.0g" },
+   };
+
+   Float_Double_Test tests_double[] = {
+      {{0.3, -3.0}, -1, 'g', "%g %g"},
+      {{3.704, 3.706}, 3, 'g', "%.3g %.3g"},
+   };
+
+
    puts("Starting tests...\n");
-   // floating-point numbers
-   {
-      double value = -3.0;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', -1, value);
-      CHECK_END();
-   }
-   {
-      double value = -8.88888888;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.10f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', 10, value);
-      CHECK_END();
-   }
-   {
-      double value = 880.08888888;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.10f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', 10, value);
-      CHECK_END();
-   }
-   {
-      double value = 4.1;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.1f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', 1, value);
-      CHECK_END();
-   }
-   {
-      double value = 0.1;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.0f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', 0, value);
-      CHECK_END();
-   }
-   {
-      double value = 1e-4;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.2f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', 2, value);
-      CHECK_END();
-   }
-   {
-      double value = -5.2;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.2f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', 2, value);
-      CHECK_END();
-   }
-   {
-      double value = 0.;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.1f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', 1, value);
-      CHECK_END();
-   }
-   {
-      double value = -0.;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', -1, value);
-      CHECK_END();
-   }
-   {
-      double value = 9.09834e-07;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', -1, value);
-      CHECK_END();
-   }
-   {
-      double value = 38685626227668133590597632.0;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.1f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', 1, value);
-      CHECK_END();
-   }
-   {
-      double value = 5e-7;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.24f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', 24, value);
-      CHECK_END();
-   }
-   {
-      double value = 2e-17;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.24f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', 24, value);
-      CHECK_END();
-   }
-   {
-      double value = 1e-8;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.10f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', 10, value);
-      CHECK_END();
-   }
-   {
-      double value = 100056789.0;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.1f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', 1, value);
-      CHECK_END();
-   }
-   {
-      double value = 1.23;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.2f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', 2, value);
-      CHECK_END();
-   }
-   {
-      double value = -3.0;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%e", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'e', -1, value);
-      CHECK_END();
-   }
-   {
-      double value = 4.1;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.1E", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'E', 1, value);
-      CHECK_END();
-   }
-   {
-      double value = -5.2;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.2e", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'e', 2, value);
-      CHECK_END();
-   }
-   {
-      double value1 = 0.3;
-      double value2 = -3.0;
+   for (size_t i = 0; i < sizeof(tests_single) /
+         sizeof(tests_single[0]); i += 1) {
+      Float_Single_Test test = tests_single[i];
 
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%g %g", value1, value2);
-      int ftoa_ret = ftoa(ftoa_buf, 'g', -1, value1);
-      ftoa_buf[ftoa_ret++] = ' ';
-      ftoa_ret += ftoa(&ftoa_buf[ftoa_ret], 'g', -1, value2);
-      CHECK_END();
-   }
-   {
-      double value = 4.1;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.1G", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'g', 1, value);
-      CHECK_END();
-   }
-   {
-      double value = 3e-300;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%g", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'g', -1, value);
-      CHECK_END();
-   }
-   {
-      double value = 1.2;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.0g", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'g', 0, value);
-      CHECK_END();
-   }
-   {
-      double value = -3.0;
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%f", value);
-      int ftoa_ret = ftoa(ftoa_buf, 'f', -1, value);
-      CHECK_END();
-   }
-   {
-      double value1 = 3.704;
-      double value2 = 3.706;
+      int ftoa_len = ftoa(ftoa_buf, test.fmt, test.prec, test.value);
+      stbsp_sprintf(stb_buf, test.printf_fmt, test.value);
+      size_t stb_len = strlen(stb_buf);
 
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%.3g %.3g", value1, value2);
-      int ftoa_ret = ftoa(ftoa_buf, 'g', 3, value1);
-      ftoa_buf[ftoa_ret++] = ' ';
-      ftoa_ret += ftoa(&ftoa_buf[ftoa_ret], 'g', 3, value2);
-      CHECK_END();
-   }
-   {
-      double value1 = 0.3;
-      double value2 = -3.0;
-
-      int stb_ret = stbsp_sprintf(sprintf_buf, "%g %g", value1, value2);
-      int ftoa_ret = ftoa(ftoa_buf, 'g', -1, value1);
-      ftoa_buf[ftoa_ret + 1] = ' ';
-      ftoa_ret += 1;
-      ftoa_ret += ftoa(&ftoa_buf[ftoa_ret], 'g', -1, value2);
       CHECK_END();
    }
 
+   for (size_t i = 0; i < sizeof(tests_double) /
+         sizeof(tests_double[0]); i += 1) {
+      Float_Double_Test test = tests_double[i];
+
+      int ftoa_len = ftoa(ftoa_buf, test.fmt, test.prec, test.value[0]);
+      ftoa_buf[ftoa_len++] = ' ';
+      ftoa_len += ftoa(&ftoa_buf[ftoa_len], test.fmt, test.prec, test.value[1]);
+
+      stbsp_sprintf(stb_buf, test.printf_fmt, test.value[0], test.value[1]);
+      size_t stb_len = strlen(stb_buf);
+
+      CHECK_END();
+   }
    puts("Tests passed!\n");
 }
