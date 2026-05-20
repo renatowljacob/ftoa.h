@@ -69,7 +69,7 @@ int main(void)
          sizeof(tests_single[0]); i += 1) {
       Float_Single_Test test = tests_single[i];
 
-      int ftoa_len = ftoa(ftoa_buf, test.fmt, test.prec, test.value);
+      int ftoa_len = ftoa(ftoa_buf, test.fmt, test.prec, test.value, 0);
       stbsp_sprintf(stb_buf, test.printf_fmt, test.value);
       size_t stb_len = strlen(stb_buf);
 
@@ -80,9 +80,9 @@ int main(void)
          sizeof(tests_double[0]); i += 1) {
       Float_Double_Test test = tests_double[i];
 
-      int ftoa_len = ftoa(ftoa_buf, test.fmt, test.prec, test.value[0]);
+      int ftoa_len = ftoa(ftoa_buf, test.fmt, test.prec, test.value[0], 0);
       ftoa_buf[ftoa_len++] = ' ';
-      ftoa_len += ftoa(&ftoa_buf[ftoa_len], test.fmt, test.prec, test.value[1]);
+      ftoa_len += ftoa(&ftoa_buf[ftoa_len], test.fmt, test.prec, test.value[1], 0);
 
       stbsp_sprintf(stb_buf, test.printf_fmt, test.value[0], test.value[1]);
       size_t stb_len = strlen(stb_buf);

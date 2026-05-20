@@ -73,7 +73,7 @@
 #define FTOA__METRIC_1024 2048
 #define FTOA__METRIC_JEDEC 4096
 
-#ifdef STB_SPRINTF_NOUNALIGNED // define this before inclusion to force ftoa_sprintf to always use aligned accesses
+#ifdef FTOA_NOUNALIGNED // define this before inclusion to force ftoa_sprintf to always use aligned accesses
 #define FTOA__UNALIGNED(code)
 #else
 #define FTOA__UNALIGNED(code) code
@@ -81,19 +81,14 @@
 
 #define FTOA__SPECIAL 0x7000
 
-#ifndef STB_SPRINTF_MIN
-#define STB_SPRINTF_MIN 512 // how many characters per callback
-#endif
-
 /*
  *  buf:    buffer into which to write
  *  fmt:    float format (either one of f, e, E, g, and G)
- *  prec:   for f, e, and E conversions, digits to appear after the radix
- *          character; for g and G conversions, maximum number of significant
- *          digits. pass -1 for default precision (6)
+ *  prec:   pass -1 to get the default precision (6)
  *  number: double to format
+ *  flags:  FTOA__* flags
  */
-int ftoa(char *buf, char fmt, int prec, double number);
+int ftoa(char *buf, char fmt, int prec, double number, ftoa__uint32 flags);
 
 // internal float utility functions
 static ftoa__int32 ftoa__real_to_str(char const **start, ftoa__uint32 *len, char *out, ftoa__int32 *decimal_pos, double value, ftoa__uint32 frac_digits);
@@ -123,7 +118,7 @@ static struct
    "75767778798081828384858687888990919293949596979899"
 };
 
-int ftoa(char *buf, char fmt, int prec, double number) {
+int ftoa(char *buf, char fmt, int prec, double number, ftoa__uint32 flags) {
    static char hex[] = "0123456789abcdefxp";
    static char hexu[] = "0123456789ABCDEFXP";
    char *bf;
@@ -137,7 +132,7 @@ int ftoa(char *buf, char fmt, int prec, double number) {
    // ok, we have a percent, read the modifiers first
    fw = 0;
    pr = prec >= 0 ? prec : -1;
-   fl = 0;
+   fl = flags;
    tz = 0;
 
    // handle each replacement
