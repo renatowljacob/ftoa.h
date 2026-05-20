@@ -135,6 +135,13 @@ int ftoa(char *buf, char fmt, int prec, double number, ftoa__uint32 flags) {
    fl = flags;
    tz = 0;
 
+   if (fl & FTOA__METRIC_JEDEC) {
+      fl |= FTOA__METRIC_1024;
+   }
+   if (fl & FTOA__METRIC_1024) {
+      fl |= FTOA__METRIC_SUFFIX;
+   }
+
    // handle each replacement
    switch (fmt) {
 #define FTOA__NUMSZ 512 // big enough for e308 (with commas) or e-307
