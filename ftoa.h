@@ -38,6 +38,53 @@
 // with MSVC or GCC (but they don't match each other either).  We also
 // don't attempt to find the minimum length matching float (pre-MSVC15
 // doesn't either).
+//
+// EXTRAS:
+// =======
+// Like some GCCs, for floats, you can use FTOA__TRIPLET_COMMA and commas will
+// be inserted on the thousands: 12345 would print 12,345.
+//
+// For floats, you can use FTOA__METRIC_SUFFIX and the number will be divided to
+// get kilo, mega, giga or tera and then printed, so "%$d" 1000 is "1.0 k",
+// "%$.2d" 2536000 is "2.53 M", etc. For byte values, use FTOA__METRIC_1024 to
+// turn 2536000 to "2.42 Mi". If you prefer JEDEC suffixes to SI ones, use
+// FTOA__METRIC_JEDEC -> "2.42 M". To remove the space between the number and
+// the suffix, add FTOA__METRIC_NOSPACE -> "2.53M".
+
+#if defined(__clang__)
+ #if defined(__has_feature) && defined(__has_attribute)
+  #if __has_feature(address_sanitizer)
+   #if __has_attribute(__no_sanitize__)
+    #define FTOA__ASAN __attribute__((__no_sanitize__("address")))
+   #elif __has_attribute(__no_sanitize_address__)
+    #define FTOA__ASAN __attribute__((__no_sanitize_address__))
+   #elif __has_attribute(__no_address_safety_analysis__)
+    #define FTOA__ASAN __attribute__((__no_address_safety_analysis__))
+   #endif
+  #endif
+ #endif
+#elif defined(__GNUC__) && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
+ #if defined(__SANITIZE_ADDRESS__) && __SANITIZE_ADDRESS__
+  #define FTOA__ASAN __attribute__((__no_sanitize_address__))
+ #endif
+#endif
+
+#ifndef FTOA__ASAN
+#define FTOA__ASAN
+#endif
+
+#ifdef FTOA_SPRINTF_STATIC
+#define FTOA__PUBLICDEC static
+#define FTOA__PUBLICDEF static FTOA__ASAN
+#else
+#ifdef __cplusplus
+#define FTOA__PUBLICDEC extern "C"
+#define FTOA__PUBLICDEF extern "C" FTOA__ASAN
+#else
+#define FTOA__PUBLICDEC extern
+#define FTOA__PUBLICDEF FTOA__ASAN
+#endif
+#endif
 
 #ifndef FTOA_H_INCLUDE
 #define FTOA_H_INCLUDE
@@ -88,7 +135,7 @@
  *  number: double to format
  *  flags:  FTOA__* flags
  */
-int ftoa(char *buf, char fmt, int prec, double number, ftoa__uint32 flags);
+FTOA__PUBLICDEC int ftoa(char *buf, char fmt, int prec, double number, ftoa__uint32 flags);
 
 // internal float utility functions
 static ftoa__int32 ftoa__real_to_str(char const **start, ftoa__uint32 *len, char *out, ftoa__int32 *decimal_pos, double value, ftoa__uint32 frac_digits);
@@ -102,6 +149,12 @@ static void ftoa__lead_sign(ftoa__uint32 fl, char *sign);
 #endif //  FTOA_H_INCLUDE
 
 #ifdef FTOA_IMPLEMENTATION
+
+#ifndef FTOA_SPRINTF_MSVC_MODE // used for MSVC2013 and earlier (MSVC2015 matches GCC)
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+#define FTOA_SPRINTF_MSVC_MODE
+#endif
+#endif
 
 static char ftoa__period = '.';
 static char ftoa__comma = ',';
@@ -118,7 +171,7 @@ static struct
    "75767778798081828384858687888990919293949596979899"
 };
 
-int ftoa(char *buf, char fmt, int prec, double number, ftoa__uint32 flags) {
+FTOA__PUBLICDEF int ftoa(char *buf, char fmt, int prec, double number, ftoa__uint32 flags) {
    static char hex[] = "0123456789abcdefxp";
    static char hexu[] = "0123456789ABCDEFXP";
    char *bf;
@@ -177,7 +230,7 @@ int ftoa(char *buf, char fmt, int prec, double number, ftoa__uint32 flags) {
       n64 += ((((ftoa__uint64)8) << 56) >> (pr * 4));
    // add leading chars
 
-#ifdef STB_SPRINTF_MSVC_MODE
+#ifdef FTOA_SPRINTF_MSVC_MODE
    *s++ = '0';
    *s++ = 'x';
 #else
@@ -302,7 +355,7 @@ doexpfromg:
       dp = -dp;
    } else
       tail[2] = '+';
-#ifdef STB_SPRINTF_MSVC_MODE
+#ifdef FTOA_SPRINTF_MSVC_MODE
    n = 5;
 #else
    n = (dp >= 100) ? 5 : 4;
